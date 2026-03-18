@@ -53,7 +53,7 @@ export class WalletService {
       throw new BadRequestException('Invalid funding amount');
     }
 
-    const idempotentResult = this.transactionService.getIdempotencyResult(dto.idempotencyKey);
+    const idempotentResult = await this.transactionService.getIdempotencyResult(dto.idempotencyKey);
     if (idempotentResult) {
       return idempotentResult;
     }
@@ -110,7 +110,7 @@ export class WalletService {
         status: 'SUCCESS',
       };
 
-      this.transactionService.storeIdempotencyResult(dto.idempotencyKey, result);
+      await this.transactionService.storeIdempotencyResult(dto.idempotencyKey, result);
       return result;
     } catch (error) {
       await queryRunner.rollbackTransaction();

@@ -6,9 +6,13 @@ jest.mock('axios');
 
 describe('FxService', () => {
   let service: FxService;
+  const mockCacheService = {
+    getJson: jest.fn(),
+    setJson: jest.fn(),
+  };
 
   beforeEach(() => {
-    service = new FxService();
+    service = new FxService(mockCacheService as any);
     jest.clearAllMocks();
   });
 
@@ -27,6 +31,10 @@ describe('FxService', () => {
 
   it('should return cached rate on second call without hitting API again', async () => {
     const mockedAxios = axios as jest.Mocked<typeof axios>;
+    mockCacheService.getJson.mockResolvedValueOnce(null).mockResolvedValueOnce({
+      rate: 0.00065,
+      timestamp: '2026-03-18T00:00:00.000Z',
+    });
     mockedAxios.get.mockResolvedValue({
       data: {
         rates: {
@@ -42,6 +50,7 @@ describe('FxService', () => {
     expect(second.source).toBe('cache');
     expect(second.rate).toBe(first.rate);
     expect(mockedAxios.get).toHaveBeenCalledTimes(1);
+    expect(mockCacheService.setJson).toHaveBeenCalled();
   });
 
   it('should retry and throw service unavailable after API failures', async () => {

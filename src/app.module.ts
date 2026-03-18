@@ -12,6 +12,7 @@ import { WalletModule } from './services/wallet/wallet.module';
 import { FxModule } from './services/fx/fx.module';
 import { TransactionModule } from './services/transactions/transaction.module';
 import { TradingModule } from './services/trading/trading.module';
+import { CacheModule } from './services/cache/cache.module';
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { TradingModule } from './services/trading/trading.module';
     FxModule,
     TransactionModule,
     TradingModule,
+    CacheModule,
   ],
   controllers: [],
   providers: [

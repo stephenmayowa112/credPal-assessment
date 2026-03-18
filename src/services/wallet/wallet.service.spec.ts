@@ -96,7 +96,7 @@ describe('WalletService', () => {
   });
 
   it('should return idempotent result without processing funding', async () => {
-    mockTransactionService.getIdempotencyResult.mockReturnValue({ ok: true });
+    mockTransactionService.getIdempotencyResult.mockResolvedValue({ ok: true });
 
     const result = await service.fundWallet('user-1', {
       amount: 100,
@@ -108,7 +108,7 @@ describe('WalletService', () => {
   });
 
   it('should throw for invalid funding amount', async () => {
-    mockTransactionService.getIdempotencyResult.mockReturnValue(null);
+    mockTransactionService.getIdempotencyResult.mockResolvedValue(null);
 
     await expect(
       service.fundWallet('user-1', {
@@ -119,7 +119,7 @@ describe('WalletService', () => {
   });
 
   it('should perform funding transaction successfully', async () => {
-    mockTransactionService.getIdempotencyResult.mockReturnValue(null);
+    mockTransactionService.getIdempotencyResult.mockResolvedValue(null);
 
     mockQueryRunner.manager.findOne.mockResolvedValue({
       id: 'wallet-1',

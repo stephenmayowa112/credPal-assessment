@@ -100,7 +100,7 @@ describe('TradingService', () => {
   });
 
   it('should return idempotent conversion result when key already exists', async () => {
-    mockTransactionService.getIdempotencyResult.mockReturnValue({
+    mockTransactionService.getIdempotencyResult.mockResolvedValue({
       transactionId: 'tx-1',
       sourceCurrency: 'NGN',
       targetCurrency: 'USD',
@@ -123,7 +123,7 @@ describe('TradingService', () => {
   });
 
   it('should throw insufficient balance when source funds are low', async () => {
-    mockTransactionService.getIdempotencyResult.mockReturnValue(null);
+    mockTransactionService.getIdempotencyResult.mockResolvedValue(null);
     mockFxService.getRate.mockResolvedValue({
       from: 'NGN',
       to: 'USD',

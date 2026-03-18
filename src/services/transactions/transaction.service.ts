@@ -6,11 +6,7 @@ import {
   PaginationDto,
   TransactionFiltersDto,
 } from '../../common/dto/transaction.dto';
-
-interface IdempotencyCacheEntry {
-  expiresAt: number;
-  result: unknown;
-}
+import { CacheService } from '../cache/cache.service';
 
 export interface CreateTransactionInput {
   userId: string;
@@ -26,12 +22,12 @@ export interface CreateTransactionInput {
 
 @Injectable()
 export class TransactionService {
-  private readonly idempotencyCache = new Map<string, IdempotencyCacheEntry>();
-  private readonly IDEMPOTENCY_TTL_MS = 24 * 60 * 60 * 1000;
+  private readonly IDEMPOTENCY_TTL_SECONDS = 24 * 60 * 60;
 
   constructor(
     @InjectRepository(Transaction)
     private readonly transactionRepository: Repository<Transaction>,
+    private readonly cacheService: CacheService,
   ) {}
 
   async createTransaction(input: CreateTransactionInput): Promise<Transaction> {
@@ -43,25 +39,16 @@ export class TransactionService {
     return this.transactionRepository.save(transaction);
   }
 
-  storeIdempotencyResult(key: string, result: unknown): void {
-    this.idempotencyCache.set(key, {
+  async storeIdempotencyResult(key: string, result: unknown): Promise<void> {
+    await this.cacheService.setJson(
+      `idempotency:${key}`,
       result,
-      expiresAt: Date.now() + this.IDEMPOTENCY_TTL_MS,
-    });
+      this.IDEMPOTENCY_TTL_SECONDS,
+    );
   }
 
-  getIdempotencyResult<T = unknown>(key: string): T | null {
-    const entry = this.idempotencyCache.get(key);
-    if (!entry) {
-      return null;
-    }
-
-    if (Date.now() > entry.expiresAt) {
-      this.idempotencyCache.delete(key);
-      return null;
-    }
-
-    return entry.result as T;
+  async getIdempotencyResult<T = unknown>(key: string): Promise<T | null> {
+    return this.cacheService.getJson<T>(`idempotency:${key}`);
   }
 
   async getTransactionHistory(

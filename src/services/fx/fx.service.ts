@@ -4,11 +4,11 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import axios from 'axios';
+import { CacheService } from '../cache/cache.service';
 
 interface RateCacheItem {
   rate: number;
   timestamp: string;
-  expiresAt: number;
 }
 
 @Injectable()
@@ -22,8 +22,9 @@ export class FxService {
     'AUD',
     'JPY',
   ];
-  private readonly cache = new Map<string, RateCacheItem>();
-  private readonly CACHE_TTL_MS = 5 * 60 * 1000;
+  private readonly CACHE_TTL_SECONDS = 5 * 60;
+
+  constructor(private readonly cacheService: CacheService) {}
 
   async getRate(from: string, to: string): Promise<{
     from: string;
@@ -50,8 +51,8 @@ export class FxService {
     }
 
     const key = `fx_rate:${source}:${target}`;
-    const cached = this.cache.get(key);
-    if (cached && Date.now() <= cached.expiresAt) {
+    const cached = await this.cacheService.getJson<RateCacheItem>(key);
+    if (cached) {
       return {
         from: source,
         to: target,
@@ -63,11 +64,14 @@ export class FxService {
 
     const response = await this.fetchFromAPI(source, target);
 
-    this.cache.set(key, {
-      rate: response.rate,
-      timestamp: response.timestamp,
-      expiresAt: Date.now() + this.CACHE_TTL_MS,
-    });
+    await this.cacheService.setJson(
+      key,
+      {
+        rate: response.rate,
+        timestamp: response.timestamp,
+      },
+      this.CACHE_TTL_SECONDS,
+    );
 
     return {
       from: source,

@@ -4,6 +4,7 @@ import { getRepositoryToken } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Transaction } from '../../entities/transaction.entity';
 import { PaginationDto, TransactionFiltersDto } from '../../common/dto/transaction.dto';
+import { CacheService } from '../cache/cache.service';
 import { TransactionService } from './transaction.service';
 
 describe('TransactionService', () => {
@@ -26,6 +27,11 @@ describe('TransactionService', () => {
     createQueryBuilder: jest.fn().mockReturnValue(mockQueryBuilder),
   };
 
+  const mockCacheService = {
+    getJson: jest.fn(),
+    setJson: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -33,6 +39,10 @@ describe('TransactionService', () => {
         {
           provide: getRepositoryToken(Transaction),
           useValue: mockRepository,
+        },
+        {
+          provide: CacheService,
+          useValue: mockCacheService,
         },
       ],
     }).compile();
@@ -65,24 +75,21 @@ describe('TransactionService', () => {
     expect(result.id).toBe('tx-1');
   });
 
-  it('should store and retrieve idempotency results', () => {
-    service.storeIdempotencyResult('idem-key', { ok: true });
+  it('should store and retrieve idempotency results', async () => {
+    mockCacheService.getJson.mockResolvedValue({ ok: true });
+    await service.storeIdempotencyResult('idem-key', { ok: true });
 
-    const result = service.getIdempotencyResult('idem-key');
+    const result = await service.getIdempotencyResult('idem-key');
 
     expect(result).toEqual({ ok: true });
+    expect(mockCacheService.setJson).toHaveBeenCalled();
   });
 
-  it('should return null when idempotency result is expired', () => {
-    const nowSpy = jest.spyOn(Date, 'now');
-    nowSpy.mockReturnValue(1000);
-    service.storeIdempotencyResult('expired-key', { ok: true });
-
-    nowSpy.mockReturnValue(1000 + 24 * 60 * 60 * 1000 + 1);
-    const result = service.getIdempotencyResult('expired-key');
+  it('should return null when idempotency result does not exist', async () => {
+    mockCacheService.getJson.mockResolvedValue(null);
+    const result = await service.getIdempotencyResult('expired-key');
 
     expect(result).toBeNull();
-    nowSpy.mockRestore();
   });
 
   it('should return paginated transaction history', async () => {

@@ -78,7 +78,7 @@ export class TradingService {
 
     this.validateConversionInput(sourceCurrency, targetCurrency, sourceAmount);
 
-    const idempotentResult = this.transactionService.getIdempotencyResult<ConversionResult>(
+    const idempotentResult = await this.transactionService.getIdempotencyResult<ConversionResult>(
       dto.idempotencyKey,
     );
     if (idempotentResult) {
@@ -159,7 +159,7 @@ export class TradingService {
         status: savedTransaction.status,
       };
 
-      this.transactionService.storeIdempotencyResult(dto.idempotencyKey, result);
+      await this.transactionService.storeIdempotencyResult(dto.idempotencyKey, result);
       return result;
     } catch (error) {
       await queryRunner.rollbackTransaction();
