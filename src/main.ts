@@ -3,12 +3,18 @@ import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import helmet from 'helmet';
 import { AppModule } from './app.module';
+import { GlobalExceptionFilter } from './common/filters/global-exception.filter';
+import { RequestIdMiddleware } from './common/middleware/request-id.middleware';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
 
   // Security headers
   app.use(helmet());
+
+  // Request tracking middleware
+  const requestIdMiddleware = new RequestIdMiddleware();
+  app.use((req, res, next) => requestIdMiddleware.use(req, res, next));
 
   // CORS configuration
   app.enableCors({
@@ -27,6 +33,9 @@ async function bootstrap() {
       },
     }),
   );
+
+  // Global exception filter
+  app.useGlobalFilters(new GlobalExceptionFilter());
 
   // Swagger documentation
   const config = new DocumentBuilder()

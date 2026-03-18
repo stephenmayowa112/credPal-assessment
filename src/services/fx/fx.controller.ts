@@ -1,5 +1,6 @@
 import { Controller, Get, Query, UseGuards } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { GetRateDto } from '../../common/dto/trading.dto';
 import { VerifiedUserGuard } from '../auth/verified-user.guard';
 import { FxService } from './fx.service';
@@ -12,6 +13,7 @@ export class FxController {
   constructor(private readonly fxService: FxService) {}
 
   @Get('rates')
+  @Throttle({ default: { limit: 100, ttl: 60000 } })
   @ApiOperation({ summary: 'Retrieve current FX rate for a pair' })
   getRate(@Query() query: GetRateDto) {
     return this.fxService.getRate(query.from, query.to);
