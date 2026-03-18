@@ -25,6 +25,15 @@ export class AuthenticationController {
   }
 
   @Public()
+  @Post('verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify email with OTP' })
+  @ApiResponse({ status: 200, description: 'Email verified successfully' })
+  verify(@Body() verifyEmailDto: VerifyEmailDto) {
+    return this.authenticationService.verifyEmail(verifyEmailDto);
+  }
+
+  @Public()
   @Post('verify-email')
   @HttpCode(HttpStatus.OK)
   @ApiOperation({ summary: 'Verify email with OTP' })

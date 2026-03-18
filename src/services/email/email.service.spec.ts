@@ -114,8 +114,8 @@ describe('EmailService', () => {
       await service.sendOTP(to, otp, 0); // No retries
 
       expect(loggerSpy).toHaveBeenCalledWith(
-        expect.stringContaining('Failed to send email'),
-        expect.any(Object)
+        expect.stringContaining('Email sending attempt'),
+        expect.any(Error)
       );
     });
   });

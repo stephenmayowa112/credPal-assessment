@@ -28,14 +28,14 @@ interface JwtPayload {
   email: string;
 }
 
-interface LoginResponse {
+export interface LoginResponse {
   accessToken: string;
   refreshToken: string;
   tokenType: 'Bearer';
   expiresIn: number;
 }
 
-interface RefreshTokenResponse {
+export interface RefreshTokenResponse {
   accessToken: string;
   tokenType: 'Bearer';
   expiresIn: number;

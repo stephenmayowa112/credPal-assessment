@@ -23,7 +23,7 @@ export class GlobalExceptionFilter implements ExceptionFilter {
 
   catch(exception: unknown, host: ArgumentsHost) {
     const ctx = host.switchToHttp();
-    const response = response<Response>();
+    const response = ctx.getResponse<Response>();
     const request = ctx.getRequest<Request>();
 
     const requestId = (request as any).requestId || 'unknown';

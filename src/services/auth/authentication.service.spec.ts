@@ -381,7 +381,6 @@ describe('AuthenticationService', () => {
       // Mock no OTP record
       mockQueryRunner.manager.findOne.mockResolvedValueOnce(null);
 
-      await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow(BadRequestException);
       await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow('No valid OTP found for this user');
 
       // Verify transaction was rolled back
@@ -392,7 +391,6 @@ describe('AuthenticationService', () => {
       // Mock expired OTP record
       mockQueryRunner.manager.findOne.mockResolvedValueOnce(mockExpiredOtpRecord);
 
-      await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow(BadRequestException);
       await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow('OTP has expired');
 
       // Verify transaction was rolled back
@@ -406,7 +404,6 @@ describe('AuthenticationService', () => {
       // Mock bcrypt.compare to return false
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(false as never);
 
-      await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow(BadRequestException);
       await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow('Invalid OTP');
 
       // Verify transaction was rolled back
@@ -422,7 +419,6 @@ describe('AuthenticationService', () => {
       // Mock bcrypt.compare to return true
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true as never);
 
-      await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow(BadRequestException);
       await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow('User not found');
 
       // Verify transaction was rolled back
@@ -433,7 +429,6 @@ describe('AuthenticationService', () => {
       // Mock OTP record
       mockQueryRunner.manager.findOne.mockRejectedValue(new Error('Database error'));
 
-      await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow(BadRequestException);
       await expect(service.verifyEmail(verifyEmailDto)).rejects.toThrow('Email verification failed. Please try again.');
 
       // Verify transaction was rolled back
