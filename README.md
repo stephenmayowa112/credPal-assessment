@@ -210,7 +210,7 @@ Register a new user. Sends a 6-digit OTP to the provided email.
 
 ---
 
-#### `POST /auth/verify-email`
+#### `POST /auth/verify` (also available as `/auth/verify-email`)
 Verify email address using the OTP received. OTPs expire after 10 minutes.
 
 **Request body:**
@@ -304,13 +304,10 @@ Get the authenticated user's wallet balances across all currencies.
 
 **Response `200`:**
 ```json
-{
-  "walletId": "uuid",
-  "balances": [
-    { "currency": "NGN", "balance": "5000.000000" },
-    { "currency": "USD", "balance": "12.500000" }
-  ]
-}
+[
+  { "currency": "NGN", "balance": 5000 },
+  { "currency": "USD", "balance": 12.5 }
+]
 ```
 
 ---
@@ -326,13 +323,14 @@ Fund the wallet in NGN. Requires an idempotency key to prevent duplicate funding
 }
 ```
 
-**Response `200`:**
+**Response `201`:**
 ```json
 {
-  "success": true,
-  "newBalance": "6000.000000",
+  "transactionId": "uuid",
   "currency": "NGN",
-  "transactionId": "uuid"
+  "amount": 5000,
+  "balance": 6000,
+  "status": "SUCCESS"
 }
 ```
 
@@ -351,16 +349,17 @@ Convert between two currencies using real-time FX rates. Atomically debits sourc
 }
 ```
 
-**Response `200`:**
+**Response `201`:**
 ```json
 {
-  "success": true,
-  "sourceAmount": "1000.000000",
-  "targetAmount": "0.625000",
-  "fxRate": "0.000625",
+  "transactionId": "uuid",
   "sourceCurrency": "NGN",
   "targetCurrency": "USD",
-  "transactionId": "uuid"
+  "sourceAmount": 1000,
+  "targetAmount": 0.625,
+  "fxRate": 0.000625,
+  "status": "SUCCESS",
+  "timestamp": "2026-03-18T10:00:00.000Z"
 }
 ```
 
@@ -379,16 +378,18 @@ Trade between currencies (functionally equivalent to convert; semantically repre
 }
 ```
 
-**Response `200`:**
+**Response `201`:**
 ```json
 {
-  "success": true,
-  "fromAmount": "50.000000",
-  "toAmount": "85000.000000",
-  "fxRate": "1700.000000",
-  "fromCurrency": "EUR",
-  "toCurrency": "NGN",
-  "transactionId": "uuid"
+  "transactionId": "uuid",
+  "sourceCurrency": "EUR",
+  "targetCurrency": "NGN",
+  "sourceAmount": 50,
+  "targetAmount": 85000,
+  "fxRate": 1700,
+  "status": "SUCCESS",
+  "timestamp": "2026-03-18T10:00:00.000Z",
+  "type": "TRADE"
 }
 ```
 
@@ -407,7 +408,8 @@ Retrieve current FX rates for supported currency pairs. Rates are cached in Redi
   "from": "NGN",
   "to": "USD",
   "rate": 0.000625,
-  "cachedAt": "2026-03-18T10:00:00Z"
+  "timestamp": "2026-03-18T10:00:00.000Z",
+  "source": "cache"
 }
 ```
 
@@ -445,9 +447,12 @@ View paginated transaction history for the authenticated user.
       "createdAt": "2026-03-18T10:00:00Z"
     }
   ],
-  "total": 42,
-  "page": 1,
-  "limit": 20
+  "meta": {
+    "total": 42,
+    "page": 1,
+    "limit": 20,
+    "totalPages": 3
+  }
 }
 ```
 
@@ -461,7 +466,11 @@ Returns
 
 **Response `200`:**
 ```json
-{ "status": "ok" }
+{
+  "status": "ok",
+  "timestamp": "2026-03-18T10:00:00.000Z",
+  "service": "FX Trading Backend"
+}
 ```
 
 ---
@@ -567,7 +576,10 @@ Schema changes are managed via TypeORM migrations rather than `synchronize: true
 
 ```bash
 # Run all tests (single pass)
-npm test -- --run
+npm test
+
+# Run all tests serially (useful for CI/debugging)
+npm test -- --runInBand
 
 # Watch mode
 npm run test:watch
