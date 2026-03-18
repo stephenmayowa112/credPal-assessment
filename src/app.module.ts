@@ -4,6 +4,7 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { typeOrmConfig } from './config/typeorm.config';
+import { validateEnv } from './config/env.validation';
 import { HealthModule } from './health/health.module';
 import { AuthenticationModule } from './services/auth/authentication.module';
 import { JwtAuthGuard } from './services/auth/jwt-auth.guard';
@@ -18,6 +19,7 @@ import { TradingModule } from './services/trading/trading.module';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+      validate: validateEnv,
     }),
 
     // TypeORM configuration
