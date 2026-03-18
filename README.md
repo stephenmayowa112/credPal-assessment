@@ -481,7 +481,7 @@ Returns
 
 2. **Initial NGN balance.** Every new user receives an initial NGN balance of 1,000 NGN upon registration to allow immediate testing of conversion features.
 
-3. **FX rates are fetched from exchangerate-api.com.** The base currency for rate lookups is the source currency. Cross-rates (e.g., EUR → GBP) are computed by chaining through the API response.
+3. **FX rates are fetched from an external provider via `FX_API_URL`.** The lookup uses the source currency as base and reads the target currency from the provider response.
 
 4. **FX rates are cached for 5 minutes in Redis.** This balances freshness with performance and reduces external API calls. If Redis is unavailable, the system falls back to a direct API call.
 
@@ -516,11 +516,11 @@ All balance mutations (fund, convert, trade) use TypeORM `QueryRunner` with expl
 
 ### 3. Idempotency
 
-Every mutating endpoint accepts an `idempotencyKey`. Before processing, the system checks the `transactions` table for an existing record with that key. If found, the original result is returned immediately. This makes retries safe and prevents duplicate charges.
+Every mutating endpoint accepts an `idempotencyKey`. Before processing, the system checks a shared cache entry (`idempotency:{key}`) for an existing result. If found, the original result is returned immediately. This makes retries safe and prevents duplicate processing.
 
-### 4. Redis caching for FX rates
+### 4. Redis-first caching for FX rates
 
-FX rates are cached in Redis with a 5-minute TTL. The cache key is `fx_rate:{from}:{to}`. On cache miss, the system fetches from the external API and repopulates the cache. If the external API is down, the system returns the last known cached rate with a staleness warning, or raises a `ServiceUnavailableException` if no cached value exists.
+FX rates are cached with a 5-minute TTL using cache keys like `fx_rate:{from}:{to}`. The cache layer is Redis-first with an in-memory fallback. On cache miss, the system fetches from the external API and repopulates the cache; if the provider remains unavailable after retries, it raises a `ServiceUnavailableException`.
 
 ### 5. OTP security
 
